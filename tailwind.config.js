@@ -1,14 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+
+import { join } from "path";
+
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: [join(__dirname, "src/**/*.{html,js,jsx,ts,tsx}")],
   darkMode: 'class',
   theme: {
     extend: {},
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-  ],
-}
+  plugins: [require('@tailwindcss/forms'),],
+};
