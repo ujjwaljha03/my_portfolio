@@ -16,7 +16,7 @@
 //     id: 1,
 //     title: 'XStreamer - Music Streaming',
 //     description: 'XStreamer is a fullstack music streaming platform that integrates Spotify and SoundCloud, allowing seamless playback and playlist management in one place.',
-//     link: 'https://xs-frontend-git-main-ujjwaljha03s-projects.vercel.app/',
+//     link: 'https://xstreamer.vercel.app/',
 //   },
 //   {
 //     id: 2,
