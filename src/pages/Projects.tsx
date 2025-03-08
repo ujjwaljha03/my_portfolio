@@ -105,11 +105,11 @@ interface Project {
 }
 
 const projects: Project[] = [
-  {
+   {
     id: 1,
-    title: 'EMPLOYEE MANAGEMENT SYSTEM',
-    description: 'This is a basic CRUD application project with languages used Spring Boot for Backend and Reactjs for Frontend.',
-    link: 'https://ems-frontend-henna.vercel.app/employees',
+    title: 'XStreamer - Music Streaming',
+    description: 'XStreamer is a fullstack music streaming platform that integrates Spotify and SoundCloud, allowing seamless playback and playlist management in one place.',
+    link: 'https://xstreamer.vercel.app/',
   },
   {
     id: 2,
@@ -120,7 +120,7 @@ const projects: Project[] = [
   {
     id: 3,
     title: 'Movie Reviews',
-    description: 'Project 3 Home page is not showing.',
+    description: 'A manually maintained FullStack website build to add reviews to different movies accordingly by the user.',
     link: 'https://movies-reviews-omega.vercel.app/watchlist',
   },
 ]
