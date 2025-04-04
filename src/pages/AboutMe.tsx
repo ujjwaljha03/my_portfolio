@@ -3,41 +3,77 @@
 import { useState, useRef, useEffect, FormEvent, ChangeEvent } from 'react'
 import emailjs from '@emailjs/browser';
 
+// --- Revised useWordGenerator Hook ---
+const useWordGenerator = (text: string, initialDelay: number, wordDelay: number) => {
+  const [displayedText, setDisplayedText] = useState('');
 
-
-const useWordGenerator = (text: string, delay: number) => {
-  const [displayedText, setDisplayedText] = useState(''); // Holds the currently displayed text
-  const words = text.split(" "); // Splitting the text into individual words
+  const words = text.trim().split(/\s+/);
 
   useEffect(() => {
-    emailjs.init("bhY0J6jLEjXIsab4E");
-    let timeoutId: NodeJS.Timeout; // Variable to hold the timeout ID
+
+    let wordTimeoutId: NodeJS.Timeout | null = null;
+    let initialTimeoutId: NodeJS.Timeout | null = null;
     let currentIndex = 0;
 
     const generateWord = () => {
+
       if (currentIndex < words.length) {
-        setDisplayedText(prev => `${prev} ${words[currentIndex]}`.trim()); //Append word and trim spaces
+        const currentWord = words[currentIndex]; // Get the word
+
+
+        setDisplayedText(prev => {
+          const newState = `${prev} ${currentWord}`.trim();
+          return newState;
+        });
+
         currentIndex++;
-        timeoutId = setTimeout(generateWord, delay); // Store the timeout ID
+
+        if (currentIndex < words.length) {
+          wordTimeoutId = setTimeout(generateWord, wordDelay);
+        } else {
+        }
+      } else {
       }
     };
 
-    generateWord(); // Start word generation
+    initialTimeoutId = setTimeout(() => {
+      if (words.length > 0 && words[0] !== "") {
+        generateWord();
+      }
+    }, initialDelay);
 
-    return () => clearTimeout(timeoutId); // Clean up the timeout on component unmount
-  }, [text, delay]); // Dependencies: run effect when `text` or `delay` changes
+    return () => {
+      if (initialTimeoutId) clearTimeout(initialTimeoutId);
+      if (wordTimeoutId) clearTimeout(wordTimeoutId);
+    };
+  }, [text, initialDelay, wordDelay]);
 
   return displayedText;
 };
-
-
+// --- End of Revised Hook ---
 
 export default function AboutMe() {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [showText, setShowText] = useState(false)
+  // Removed showText state as the hook now handles initial delay
+  // const [showText, setShowText] = useState(false)
   const [isPlaying, setIsPlaying] = useState(true) // State to track play/pause status
-  const aboutMeText = "Hi, I am Ujjwal Jha. I'm a passionate web developer with expertise in Spring Boot and ReactJS. I love creating beautiful and functional websites that make a difference.   "
-  const generatedText = useWordGenerator(aboutMeText, 500) // .5s delay between words
+
+  // --- Initialize EmailJS here (recommended) ---
+  useEffect(() => {
+    // Initialize EmailJS once when the component mounts
+    emailjs.init("bhY0J6jLEjXIsab4E");
+  }, []);
+  // --- End of EmailJS Init ---
+
+  const pov = "Pov: It is always the low quality videos."
+
+  const aboutMeText = "Hi, I am Ujjwal Jha. I'm a passionate web developer with expertise in Spring Boot and ReactJS. I love creating beautiful and functional websites that make a difference."; // Removed trailing space for cleaner split
+
+  // --- Use the revised hook with desired delays ---
+  // 2500ms (2.5s) initial delay, 1000ms (1s) delay between words
+  const generatedText = useWordGenerator(aboutMeText, 6000, 650);
+  const generatedPov = useWordGenerator(pov, 2000, 500);
+  // --- ---
 
   const [formData, setFormData] = useState({
     name: '',
@@ -56,7 +92,7 @@ export default function AboutMe() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
-      const result = await emailjs.send(         // emails will be send to fretime account.
+      const result = await emailjs.send(
         'service_mk1stmp', // Replace with your EmailJS service ID
         'template_dpndbom', // Replace with your EmailJS template ID
         {
@@ -64,30 +100,29 @@ export default function AboutMe() {
           from_email: formData.email,
           message: formData.message,
         },
-        'bhY0J6jLEjXIsab4E' // Replace with your EmailJS user ID
+        'bhY0J6jLEjXIsab4E' // YOUR EMAILJS USER_ID
       )
-      console.log(result.text)
+      console.log('SUCCESS!', result.status, result.text);
       alert("Message sent successfully!")
       setFormData({ name: '', email: '', message: '' })
     } catch (error) {
-      console.error('Failed to send email:', error)
+      console.error('FAILED to send email:', error)
+      // Check if 'error' has a specific structure you can log
+      if (typeof error === 'object' && error !== null && 'text' in error) {
+        console.error('EmailJS error text:', (error as { text: string }).text);
+      }
       alert("Failed to send message. Please try again.")
     }
   }
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setShowText(true)
-    }, 10000)
-
-    return () => clearTimeout(timeoutId)
-  }, [])
+  // Removed useEffect for showText
 
   // Automatically play the video when the component mounts
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.play().catch((error) => {
-        console.error('Error attempting to play:', error);
+        // Autoplay might be blocked by the browser, especially if not muted initially
+        console.error('Error attempting to play video automatically:', error);
       });
     }
   }, [])
@@ -99,7 +134,7 @@ export default function AboutMe() {
         videoRef.current.pause()
       } else {
         videoRef.current.play().catch((error) => {
-          console.error('Error attempting to play:', error);
+          console.error('Error attempting to play video:', error);
         });
       }
       setIsPlaying(!isPlaying)
@@ -114,27 +149,31 @@ export default function AboutMe() {
           ref={videoRef}
           className="w-full h-full object-cover"
           autoPlay
-          muted={false}
           loop
         >
           <source src="Sonic Jude2K - Made with Clipchamp.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-        {showText && (
-          <div className="absolute inset-0 flex items-center justify-end bg-black bg-opacity-30 p-4">
-            <div className="text-right">
-              <p className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl animate-fade-in max-w-[80%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%] mb-2">
-                Pov: It is always the low quality videos.
+
+
+        {generatedText && (
+          <div className="absolute inset-0 flex items-center justify-start bg-black bg-opacity-30 p-4 pointer-events-none">
+
+            <div className="text-left w-1/2 lg:w-1/3 xl:w-1/4"> {/* Example: 50% width on small screens, 33% on large, 25% on xl */}
+
+              <p className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl animate-fade-in mb-2">
+                {generatedPov}
               </p>
-              <p className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl animate-fade-in max-w-[80%] sm:max-w-[70%] md:max-w-[60%] lg:max-w-[50%]">
+              <p className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl animate-fade-in">
                 {generatedText}
               </p>
             </div>
           </div>
         )}
+
         <button
           onClick={togglePlayPause}
-          className="absolute top-4 right-4 px-3 py-1 sm:px-4 sm:py-2 bg-white text-black text-sm sm:text-base rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+          className="absolute top-4 right-4 px-3 py-1 sm:px-4 sm:py-2 bg-white text-black text-sm sm:text-base rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white z-10" // Added z-index
         >
           {isPlaying ? 'Pause' : 'Play'}
         </button>
@@ -185,8 +224,8 @@ export default function AboutMe() {
               rows={4}
             ></textarea>
           </div>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="px-4 py-2 bg-violet-500 text-white rounded-md hover:bg-purple-600 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
           >
             Send Message
@@ -196,3 +235,4 @@ export default function AboutMe() {
     </div>
   )
 }
+
